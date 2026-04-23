@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Student Management Login</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div>
+                <h1>Student Management System</h1>
+                <p>Secure authentication for student records management.</p>
+            </div>
+        </header>
+        <div class="card">
+            <h2>Login</h2>
+            <form method="post" action="/login">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" required autocomplete="username">
+
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required autocomplete="current-password">
+
+                <button type="submit">Login</button>
+            </form>
+            <p class="footer-note">New user? <a href="/register">Register here</a></p>
+        </div>
+    </div>
+</body>
+</html>
