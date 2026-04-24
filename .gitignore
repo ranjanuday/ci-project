@@ -3,3 +3,4 @@ venv/
 __pycache__/
 *.pycbandit_report.html
 bandit_report.html
+bandit_report.html
