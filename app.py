@@ -5,26 +5,40 @@ from werkzeug.utils import secure_filename
 import bcrypt
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+import re
 
 app = Flask(__name__)
 app.secret_key = "secret"
 
-# --- Rate Limiter (Brute Force Protection) ---
+# --- Rate Limiter ---
 limiter = Limiter(get_remote_address, app=app, default_limits=["5 per minute"])
 
 # --- Upload Config ---
 UPLOAD_FOLDER = "uploads"
 ALLOWED_EXTENSIONS = {"pdf", "docx", "jpg", "jpeg", "png"}
-MAX_CONTENT_LENGTH = 5 * 1024 * 1024  # 5 MB limit
+MAX_CONTENT_LENGTH = 5 * 1024 * 1024
 
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 app.config["MAX_CONTENT_LENGTH"] = MAX_CONTENT_LENGTH
 
-# --- Helper: check allowed file type ---
+# --- Helpers ---
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
-# --- Database connection ---
+def is_strong_password(password):
+    if len(password) < 8:
+        return False
+    if not re.search(r"[A-Z]", password):
+        return False
+    if not re.search(r"[a-z]", password):
+        return False
+    if not re.search(r"[0-9]", password):
+        return False
+    if not re.search(r"[!@#$%^&*(),.?\":{}|<>]", password):
+        return False
+    return True
+
+# --- DB ---
 def get_db_connection():
     return mysql.connector.connect(
         host="localhost",
@@ -33,7 +47,7 @@ def get_db_connection():
         database="student_db"
     )
 
-# --- Home route ---
+# --- Routes ---
 @app.route("/")
 def home():
     return redirect("/login")
@@ -71,6 +85,9 @@ def register():
         password = request.form["password"].strip()
         role = request.form["role"].strip()
 
+        if not is_strong_password(password):
+            return "Password must be strong (8+, A-Z, a-z, 0-9, special char)"
+
         hashed_pw = bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 
         conn = get_db_connection()
@@ -104,7 +121,7 @@ def dashboard():
                            role=session["role"],
                            students=students)
 
-# --- Admin Panel ---
+# --- Admin Panel (FIXED) ---
 @app.route("/admin", methods=["GET", "POST"])
 def admin_panel():
     if session.get("role") != "admin":
@@ -112,14 +129,21 @@ def admin_panel():
 
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True, buffered=True)
-    cursor.execute("SELECT username, role FROM users")
-    users = cursor.fetchall()
 
+    # ✅ UPDATE FIRST
     if request.method == "POST":
         username = request.form["username"]
         role = request.form["role"]
-        cursor.execute("UPDATE users SET role=%s WHERE username=%s", (role, username))
+
+        cursor.execute(
+            "UPDATE users SET role=%s WHERE username=%s",
+            (role, username)
+        )
         conn.commit()
+
+    # ✅ FETCH AFTER UPDATE
+    cursor.execute("SELECT username, role FROM users")
+    users = cursor.fetchall()
 
     cursor.close()
     conn.close()
@@ -128,12 +152,13 @@ def admin_panel():
                            username=session.get("username"),
                            users=users)
 
-# --- File Upload (secure) ---
+# --- Upload ---
 @app.route("/upload", methods=["GET", "POST"])
 def upload():
     if request.method == "POST":
         if "file" not in request.files:
             return "No file part"
+
         file = request.files["file"]
 
         if file.filename == "":
@@ -154,7 +179,7 @@ def upload():
         </form>
     '''
 
-# --- Add Student (Admin Only) ---
+# --- Add Student ---
 @app.route("/student/add", methods=["GET", "POST"])
 def add_student():
     if session.get("role") != "admin":
@@ -181,7 +206,7 @@ def add_student():
         </form>
     '''
 
-# --- API (Admins Only) ---
+# --- API ---
 @app.route("/api/students")
 def api_students():
     if session.get("role") != "admin":
@@ -193,6 +218,7 @@ def api_students():
     students = cursor.fetchall()
     cursor.close()
     conn.close()
+
     return {"students": students}
 
 # --- Logout ---
@@ -200,8 +226,6 @@ def api_students():
 def logout():
     session.clear()
     return redirect("/login")
-
-# uday is changed is superman
 
 # --- Run ---
 if __name__ == "__main__":

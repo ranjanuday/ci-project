@@ -13,6 +13,7 @@
                 <p>Logged in as {{ username }}. Manage users and roles.</p>
             </div>
         </header>
+
         <div class="card">
             <nav>
                 <a href="/dashboard">Dashboard</a>
@@ -40,7 +41,10 @@
 
             <div class="card" style="margin-top: 24px; background: rgba(15,23,42,0.65);">
                 <h3>Change Role</h3>
-                <form method="post" action="/change_role">
+
+                <!-- ✅ FIXED HERE -->
+                <form method="post" action="/admin">
+
                     <label for="username">Target Username</label>
                     <input type="text" id="username" name="username" required>
 

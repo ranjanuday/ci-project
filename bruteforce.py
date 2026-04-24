@@ -1,11 +1,11 @@
 import requests
 
 url = "http://localhost:5000/login"   # use localhost (important)
-username = "uday"
+username = "arvind"
 
 passwords = [
     "ranjan",
-    "123",
+   
     "456",
     "SELECT * FROM users;",
     
@@ -13,6 +13,7 @@ passwords = [
     "1234",""
     "12345",
     "9693"
+    ,"Uday@1234"
 ]
 
 for pwd in passwords:
