@@ -8,7 +8,7 @@ from flask_limiter.util import get_remote_address
 import re
 
 app = Flask(__name__)
-app.secret_key = "secret"
+app.secret_key = os.getenv("SECRET_KEY", "secret")
 
 # --- Rate Limiter ---
 limiter = Limiter(get_remote_address, app=app, default_limits=["5 per minute"])
@@ -43,7 +43,7 @@ def get_db_connection():
     return mysql.connector.connect(
         host="localhost",
         user="root",
-        password="Uday@123",
+        password=os.getenv("DB_PASSWORD", "Uday@123"),
         database="student_db"
     )
 
@@ -116,12 +116,14 @@ def dashboard():
     cursor.close()
     conn.close()
 
-    return render_template("dashboard.html",
-                           username=session["username"],
-                           role=session["role"],
-                           students=students)
+    return render_template(
+        "dashboard.html",
+        username=session["username"],
+        role=session["role"],
+        students=students
+    )
 
-# --- Admin Panel (FIXED) ---
+# --- Admin Panel ---
 @app.route("/admin", methods=["GET", "POST"])
 def admin_panel():
     if session.get("role") != "admin":
@@ -130,7 +132,6 @@ def admin_panel():
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True, buffered=True)
 
-    # ✅ UPDATE FIRST
     if request.method == "POST":
         username = request.form["username"]
         role = request.form["role"]
@@ -141,16 +142,17 @@ def admin_panel():
         )
         conn.commit()
 
-    # ✅ FETCH AFTER UPDATE
     cursor.execute("SELECT username, role FROM users")
     users = cursor.fetchall()
 
     cursor.close()
     conn.close()
 
-    return render_template("admin.html",
-                           username=session.get("username"),
-                           users=users)
+    return render_template(
+        "admin.html",
+        username=session.get("username"),
+        users=users
+    )
 
 # --- Upload ---
 @app.route("/upload", methods=["GET", "POST"])
@@ -191,7 +193,10 @@ def add_student():
 
         conn = get_db_connection()
         cursor = conn.cursor()
-        cursor.execute("INSERT INTO students (name, grade) VALUES (%s, %s)", (name, grade))
+        cursor.execute(
+            "INSERT INTO students (name, grade) VALUES (%s, %s)",
+            (name, grade)
+        )
         conn.commit()
         cursor.close()
         conn.close()
@@ -229,4 +234,4 @@ def logout():
 
 # --- Run ---
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    app.run(host="127.0.0.1", port=5000, debug=False)

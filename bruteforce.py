@@ -1,7 +1,7 @@
 import requests
 
 url = "http://localhost:5000/login"   # use localhost (important)
-username = "arvind"
+username = "uday"
 
 passwords = [
     "ranjan",
