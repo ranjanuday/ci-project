@@ -15,21 +15,24 @@
         </header>
         <div class="card">
             <h2>Register</h2>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <p class="alert {{ category }}">{{ message }}</p>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
             <form method="post" action="/register">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <label for="username">Username</label>
                 <input type="text" id="username" name="username" required autocomplete="username">
 
                 <label for="password">Password</label>
                 <input type="password" id="password" name="password" required autocomplete="new-password">
 
-                <label for="role">Role</label>
-                <select id="role" name="role" required>
-                    <option value="user" selected>User</option>
-                    <option value="admin">Admin</option>
-                </select>
-
                 <button type="submit">Register</button>
             </form>
+            <p class="footer-note">New accounts are created with user access. Only an admin can change roles.</p>
             <p class="footer-note">Already registered? <a href="/login">Login here</a></p>
         </div>
     </div>

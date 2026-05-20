@@ -14,7 +14,15 @@
             </div>
         </header>
         <div class="card">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <p class="alert {{ category }}">{{ message }}</p>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
             <form method="post" action="">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <label for="name">Name</label>
                 <input type="text" id="name" name="name" value="{{ student.name|e if student else '' }}" required>
 

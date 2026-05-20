@@ -15,12 +15,21 @@
         </header>
         <div class="card">
             <nav>
+                {% if role == "admin" %}
                 <a href="/student/add">Add Student</a>
-                <a href="/upload">Upload Document</a>
                 <a href="/admin">Admin Panel</a>
                 <a href="/api/students">API (Students)</a>
+                {% endif %}
+                <a href="/upload">Upload Document</a>
                 <a href="/logout">Logout</a>
             </nav>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <p class="alert {{ category }}">{{ message }}</p>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
 
             <h2>Student Records</h2>
             <table>
@@ -41,9 +50,16 @@
                         <td>{{ student.email|e }}</td>
                         <td>{{ student.course|e }}</td>
                         <td>{{ student.year|e }}</td>
-                        <td>
-                            <a href="/student/edit/{{ student.id }}">Edit</a> |
-                            <a href="/student/delete/{{ student.id }}">Delete</a>
+                        <td class="actions">
+                            {% if role == "admin" %}
+                            <a href="/student/edit/{{ student.id }}">Edit</a>
+                            <form method="post" action="/student/delete/{{ student.id }}">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="link-button">Delete</button>
+                            </form>
+                            {% else %}
+                            View only
+                            {% endif %}
                         </td>
                     </tr>
                     {% endfor %}

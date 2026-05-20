@@ -1,43 +1,47 @@
+import re
+import os
+
 import requests
 
-url = "http://localhost:5000/login"   # use localhost (important)
-username = "uday"
 
-passwords = [
-    "ranjan",
-   
-    "456",
-    "SELECT * FROM users;",
-    
-    "12347",
-    "1234",""
-    "12345",
-    "9693"
-    ,"Uday@1234"
+URL = os.getenv("LOGIN_URL", "http://127.0.0.1:5001/login")
+USERNAME = "admin"
+PASSWORDS = [
+    "password",
+    "admin",
+    "123456",
+    "Student@123",
+    "wrong-again",
+    "Admin@123",
 ]
 
-for pwd in passwords:
-    data = {
-        "username": username.strip(),
-        "password": pwd.strip()
-    }
 
-    try:
-        r = requests.post(
-            url,
-            data=data,
-            allow_redirects=False,
-            timeout=5,
-            proxies={"http": None, "https": None}  # disable proxy
-        )
+def csrf_token(html):
+    match = re.search(r'name="csrf_token" value="([^"]+)"', html)
+    if not match:
+        raise RuntimeError("Could not find CSRF token on login page")
+    return match.group(1)
 
-        print(f"[*] Tried {pwd} -> Status: {r.status_code}, Location: {r.headers.get('Location')}")
 
-        if r.status_code == 302 and r.headers.get("Location") == "/dashboard":
-            print(f"[+] FOUND PASSWORD: {pwd}")
-            break
-        else:
-            print(f"[-] Failed: {pwd}")
+session = requests.Session()
 
-    except Exception as e:
-        print(f"[!] ERROR for {pwd}: {e}")
+for password in PASSWORDS:
+    login_page = session.get(URL, timeout=5)
+    token = csrf_token(login_page.text)
+    response = session.post(
+        URL,
+        data={"username": USERNAME, "password": password, "csrf_token": token},
+        allow_redirects=False,
+        timeout=5,
+        proxies={"http": None, "https": None},
+    )
+    print(
+        f"Tried {USERNAME}:{password} -> "
+        f"status={response.status_code}, location={response.headers.get('Location')}"
+    )
+    if response.status_code == 429:
+        print("Rate limit triggered: brute-force protection is working.")
+        break
+    if response.status_code == 302 and response.headers.get("Location") == "/dashboard":
+        print("Login succeeded before rate limit. Move the real password later in the list for the demo.")
+        break

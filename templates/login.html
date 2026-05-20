@@ -15,7 +15,15 @@
         </header>
         <div class="card">
             <h2>Login</h2>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <p class="alert {{ category }}">{{ message }}</p>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
             <form method="post" action="/login">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <label for="username">Username</label>
                 <input type="text" id="username" name="username" required autocomplete="username">
 
@@ -29,4 +37,3 @@
     </div>
 </body>
 </html>
-<!-- hello -->

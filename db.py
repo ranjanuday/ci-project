@@ -1,10 +1,4 @@
-import mysql.connector
-import os
+from app import get_db_connection, init_db
 
-def get_db_connection():
-    return mysql.connector.connect(
-        host="localhost",
-        user="root",
-        password=os.getenv("DB_PASSWORD", "Uday@123"),
-        database="student_db"
-    )
+
+__all__ = ["get_db_connection", "init_db"]
